@@ -1,0 +1,58 @@
+#!/bin/bash
+
+###########
+#
+# SETTING UP COLLORS
+#
+###########
+
+red='\e[0;31m'
+RED='\e[1;31m'
+org='\e[0;33m33'
+blue='\e[0;34m'
+BLUE='\e[1;34m'
+cyan='\e[0;36m'
+CYAN='\e[1;36m'
+GRN='\e[0;32m'
+NC='\e[0m'
+
+###########
+#
+# INSTALLING ZLIB
+#
+###########
+
+echo -e "\n${GRN}NOW TRYING TO INSTALL ZLIB${NC}\n\n"
+
+if [ ! -f "/usr/bin/gcc" ] || [ ! -f "/usr/bin/make" ] || [ ! -d "/usr/include/openssl" ]; then
+   echo -e ""
+   exit
+else
+
+if [ -f /usr/bin/wget ]; then
+     wget http://www.zlib.net/zlib-1.2.5.tar.gz -o wget.log
+     rm -rf wget.log
+     tar zxvf zlib-1.2.5.tar.gz >> /dev/null
+     cd zlib-1.2.5
+     ./configure >> /dev/null
+     make >> /dev/null
+     make install >> /dev/null
+     ln -s /usr/local/include/zlib.h /usr/include/zlib.h >> /dev/null
+     ln -s /usr/local/share/man/man3/zlib.3 /usr/share/man/man3/zlib.3 >> /dev/null
+else
+     curl -O -s http://www.zlib.net/zlib-1.2.5.tar.gz
+     tar zxvf zlib-1.2.5.tar.gz >> /dev/null
+     cd zlib-1.2.5
+     ./configure >> /dev/null
+     make >> /dev/null
+     make install >> /dev/null
+     ln -s /usr/local/include/zlib.h /usr/include/zlib.h >> /dev/null
+     ln -s /usr/local/share/man/man3/zlib.3 /usr/share/man/man3/zlib.3 >> /dev/null
+   fi
+fi
+
+if [ -f /usr/include/zlib.h ]; then
+echo -e "${BLUE}ZLIB INSTALL${NC}           [ ${GRN}COMPLETED${NC} ]"
+else
+echo -e "${BLUE}ZLIB INSTALL${NC}           [ ${RED}INCOMPLETED${NC} ]"
+fi

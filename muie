@@ -1,0 +1,8 @@
+#!/bin/bash
+printf "\n\n"
+printf "SSH Version Example: OpenSSH_3.6.1p2\n"
+
+printf "\n\n"
+printf "Enter SSH 22 version: "
+read SSHV
+echo '#define SSH2_version "'$SSHV'"'>> version.h

